@@ -15,9 +15,9 @@ def add_indicators(data, ema1=200, ema2=50, ema3=20, stoch=14, rsi=14, macd_f=12
     dataframe = data.copy()
     
     #EMA (200,50,20)
-    dataframe['200ema'] = dataframe['Adj Close'].ewm(span=ema1).mean()
-    dataframe['50ema'] = dataframe['Adj Close'].ewm(span=ema2, adjust=False).mean()
-    dataframe['20ema'] = dataframe['Adj Close'].ewm(span=ema3, adjust=False).mean()
+    dataframe[f'{ema1}ema'] = dataframe['Adj Close'].ewm(span=ema1).mean()
+    dataframe[f'{ema2}ema'] = dataframe['Adj Close'].ewm(span=ema2, adjust=False).mean()
+    dataframe[f'{ema3}ema'] = dataframe['Adj Close'].ewm(span=ema3, adjust=False).mean()
 
     #STOCHASTIC
     dataframe['14-high'] = dataframe['High'].rolling(stoch).max()
@@ -70,7 +70,7 @@ def up_down(data):
         if row['log_ret'] > 0:
             lista.append(1)
         else:
-            lista.append(-1)
+            lista.append(0)
 
     serie = pd.Series(lista, index = dataframe.index)
 
@@ -88,6 +88,16 @@ def full_prediction(yhat, test_X, test_y):
 
     return inv_y, inv_yhat
 
+def full_prediction_binary(yhat, test_X, test_y):
+    yhat_re = yhat
+    test_X_re = test_X
+    inv_yhat = np.concatenate((yhat_re, test_X_re), axis=1)
+
+    test_y_re = test_y
+    inv_y = np.concatenate((test_y, test_X), axis=1)
+
+    return inv_y, inv_yhat
+
 def result(inv_yhat, inv_y):
     res = pd.DataFrame({'yhat':inv_yhat[:,0], 'y':inv_y[:,0]})
 
@@ -101,11 +111,11 @@ def result(inv_yhat, inv_y):
         if row['res'] > 0:
             lista.append(1)
         else:
-            lista.append(-1)
+            lista.append(0)
 
     serie = pd.Series(lista, index = res.index)
 
-    res['Up_Down'] = serie
+    res['Resultado'] = serie
 
     return res
 
