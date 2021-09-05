@@ -99,23 +99,18 @@ def full_prediction_binary(yhat, test_X, test_y):
     return inv_y, inv_yhat
 
 def result(inv_yhat, inv_y):
-    res = pd.DataFrame({'yhat':inv_yhat[:,0], 'y':inv_y[:,0]})
 
-    res['yhat_log'] = res['yhat'].pct_change()
-    res['y_log'] = res['y'].pct_change()
 
-    res['res'] = res['yhat_log']*res['y_log']
 
     lista =[]
-    for index, row in res.iterrows():
-        if row['res'] > 0:
+    for row in inv_yhat[:,0]:
+        if row > 0.5:
             lista.append(1)
         else:
             lista.append(0)
 
-    serie = pd.Series(lista, index = res.index)
 
-    res['Resultado'] = serie
+    res = pd.DataFrame({'Up_Down_yhat':lista, 'Up_Down_y':inv_y[:,0]})
 
     return res
 
