@@ -11,7 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 def add_indicators(data, ema1=200, ema2=50, ema3=20, stoch=14, rsi=14, macd_f=12, macd_sl=26, macd_si=9, cci=14,
-                   bb_tmpr=5, bb_up=2, bb_dwn=2, atr=14):
+                   bb_tmpr=5, bb_up=2, bb_dwn=2, atr=14, adx=14):
     dataframe = data.copy()
     
     #EMA (200,50,20)
@@ -54,7 +54,81 @@ def add_indicators(data, ema1=200, ema2=50, ema3=20, stoch=14, rsi=14, macd_f=12
     #ATR (AVERAGE TRUE RANGE)
     atr = pta.atr(dataframe['High'], dataframe['Low'], dataframe['Adj Close'], timeperiod=atr)
     dataframe['ATR'] = atr.values
-    
+
+
+
+    #ADX (Average Directional Movement Index)
+    adx = pta.adx(dataframe['High'], dataframe['Low'], dataframe['Adj Close'], timeperiod=adx)
+    dataframe['ADX'] = adx.iloc[:,0].values
+    dataframe['ADX_DMP'] = adx.iloc[:,1].values
+    dataframe['ADX_DMN'] = adx.iloc[:,2].values
+
+    #APO (Absolute Price Oscillator:)
+    apo = pta.apo(dataframe['Adj Close'], fastperiod=12, slowperiod=26, matype=0)
+    dataframe['APO'] = apo.values
+
+    #AROON
+    aroon = pta.aroon(dataframe['High'], dataframe['Low'], timeperiod=14)
+    dataframe['AROON_D'] = aroon.iloc[:,0].values
+    dataframe['AROON_U'] = aroon.iloc[:,1].values
+    dataframe['AROON_OSC'] = aroon.iloc[:,2].values
+
+    #BOP
+    bop = pta.bop(dataframe['Open'],dataframe['High'], dataframe['Low'],dataframe['Adj Close'])
+    dataframe['BOP'] = bop.values
+
+    #CMO
+    cmo = pta.cmo(dataframe['Adj Close'], timeperiod=14)
+    dataframe['CMO'] = cmo.values
+
+    #MOM
+    mom = pta.mom(dataframe['Adj Close'], timeperiod=10)
+    dataframe['MOM'] = mom.values
+
+    #PPO
+    ppo = pta.ppo(dataframe['Adj Close'], fastperiod=12, slowperiod=26, matype=0)
+    dataframe['PPO'] = ppo.iloc[:,0].values
+    dataframe['PPO_h'] = ppo.iloc[:,1].values
+    dataframe['PPO_s'] = ppo.iloc[:,2].values
+
+    #ROC
+    roc = pta.roc(dataframe['Adj Close'], timeperiod=10)
+    dataframe['ROC'] = roc.values
+
+    #STOCH
+    #stoch = pta.stoch(dataframe['High'], dataframe['Low'], dataframe['Adj Close'], fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+    #dataframe['STOCH_k'] = stoch.iloc[:,0].values
+    #dataframe['STOCH_d'] = stoch.iloc[:,1].values
+
+    #STOCHRSI
+    stochrsi = pta.stochrsi(dataframe['Adj Close'], timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
+    dataframe['STOCHRSI_k'] = stochrsi.iloc[:,0].values
+    dataframe['STOCHRSI_d'] = stochrsi.iloc[:,1].values
+
+    #TRIX
+    trix = pta.trix(dataframe['Adj Close'], timeperiod=30)
+    dataframe['TRIX'] = trix.iloc[:,0].values
+    dataframe['TRIX_s'] = trix.iloc[:,1].values
+
+    #WILLR
+    willr = pta.willr(dataframe['High'], dataframe['Low'], dataframe['Adj Close'], timeperiod=14)
+    dataframe['WILLR'] = willr.values
+
+    #NATR
+    natr = pta.natr(dataframe['High'], dataframe['Low'], dataframe['Adj Close'], timeperiod=14)
+    dataframe['NATR'] = natr.values
+
+    #CDL_PATTERN
+    cdl_pattern = pta.cdl_pattern(dataframe['Open'],dataframe['High'], dataframe['Low'], dataframe['Adj Close'])
+
+    dataframe = dataframe.join(cdl_pattern)
+
+
+
+
+
+
+
     return dataframe
 
 
@@ -114,7 +188,28 @@ def result(inv_yhat, inv_y):
 
     return res
 
+def aprox_beneficios(res, inv_yhat_df):
+    df1 = pd.DataFrame({'Ac/Er':res.iloc[:,-1], 'log_ret':inv_yhat_df.iloc[:,1]})
 
+    lista = []
+
+    for index, row in df1.iterrows():
+        if (row['Ac/Er'] == 'Error') and (row['log_ret'] < 0):
+            lista.append(row['log_ret'])
+        elif (row['Ac/Er'] == 'Error') and (row['log_ret'] > 0):
+            lista.append(row['log_ret']*-1)
+        elif (row['Ac/Er'] == 'Acierto') and (row['log_ret'] < 0):
+            lista.append(row['log_ret']*-1)
+        elif (row['Ac/Er'] == 'Acierto') and (row['log_ret'] > 0):
+            lista.append(row['log_ret'])
+        else:
+            lista.append(None)
+
+    df2 = pd.DataFrame({'Ac/Er':res.iloc[:,-1], 'log_ret':inv_yhat_df.iloc[:,1], 'sol':lista})
+
+    benef = np.exp(np.log1p(df2['sol']).cumsum())
+
+    return benef
 
 # In[ ]:
 
